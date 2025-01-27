@@ -30,6 +30,14 @@ class Problem:
         self.tags: Optional[List[str]] = data[0].get("tags", None)
         self.solvedCount: Optional[int] = data[1].get("solvedCount", None)
     
+    @classmethod
+    def only_problem(cls, data: Dict[str, Any]):
+        """
+        Alternative constructor for when only Problem object is available, and not ProblemStatistics.
+        """
+        return cls((data, {}))
+
+
     def pretty_key(self) -> Tuple[int, str]:
         """
         Returns a tuple (contestId, index) for the given problem.
@@ -62,7 +70,23 @@ class User:
         self.titlePhoto: Optional[int] = data.get("titlePhoto", None)
 
 class Submission:
-    ...
+    """
+    Object which stores information about a single Codeforces submission.
+    """
+    def __init__(self, data: Dict[str, Any]):
+        self.id: str = data["id"]
+        self.contestId: Optional[int] = data.get("contestId", None)
+        self.creationTimeSeconds: Optional[int] = data.get("creationTimeSeconds", None)
+        self.relativeTimeSeconds: Optional[int] = data.get("relativeTimeSeconds", None)
+        self.problem: Problem = Problem.only_problem(data["problem"])
+        self.author: Optional[Dict[str, Any]] = data.get("author", None)
+        self.programmingLanguage: Optional[str] = data.get("programmingLanguage", None)
+        self.verdict: Optional[str] = data.get("verdict", None)
+        self.testset: Optional[str] = data.get("testset", None)
+        self.passedTestCount: Optional[int] = data.get("passedTestCount", None)
+        self.timeConsumedMillis: Optional[int] = data.get("timeConsumedMillis", None)
+        self.memoryConsumedBytes: Optional[int] = data.get("memoryConsumedBytes", None)
+        self.points: Optional[float] = data.get("points", None)
 
 def query_api(url: str) -> Any:
     """
@@ -98,8 +122,9 @@ def get_users_info(handles: List[str]) -> List[User]:
     url = f"{USER_INFO_URL}?handles={';'.join(handles)}"
     return [User(x) for x in query_api(url)["result"]]
 
-def get_user_submissions(handle: str, count: int = 10000, ac_only: bool = False) -> list[Submission]:
+def get_user_submissions(handle: str, count: int = 10000) -> list[Submission]:
     """
     Returns a list of specified user's submissions.
     """
-    ...
+    data = query_api(f"{USER_STATUS_URL}?handle={handle}&count={count}")
+    return [Submission(x) for x in data["result"]]
