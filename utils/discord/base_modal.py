@@ -29,8 +29,6 @@ class BaseModal(Modal):
         self.view = view
 
     async def interaction_check(self, interaction: Interaction) -> bool:
-        await interaction.response.defer()
-        
         ctx_mgr().set_init_interaction(self._init_interaction)
         assert self._active_msg is not None
         ctx_mgr().set_active_msg(self._active_msg)
