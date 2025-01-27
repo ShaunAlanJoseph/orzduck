@@ -56,5 +56,3 @@ def get_user_data(user: str) -> Any:
 
 def get_user_submissions(user: str) -> Any:
     pass
-
-get_problem_list()
