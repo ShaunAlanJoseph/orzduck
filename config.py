@@ -19,6 +19,8 @@ DB_DATABASE = getenv("DB_DATABASE")
 DB_USER = getenv("DB_USER")
 DB_PASS = getenv("DB_PASS")
 
+ADMINS = [int(user_id) for user_id in getenv("ADMINS").split(", ")]
+
 TORTOISE_ORM: Dict[str, Any] = {
     "connections": {
         "default": f"postgres://{DB_USER}:{DB_PASS}@{DB_URL}:{DB_PORT}/{DB_DATABASE}"

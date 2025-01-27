@@ -65,6 +65,9 @@ class BaseView(View):
     async def on_timeout(self):
         self.clear_items()
         self._add_text_dropdown("Timed out . . .")
+
+        assert self._active_msg is not None
+        ctx_mgr().set_active_msg(self._active_msg)
         await Messenger.send_message_no_reset(view=self)
     
     def __del__(self):
@@ -79,6 +82,7 @@ class BaseView(View):
     async def stop_and_disable(self, *, custom_text: Optional[str] = None):
         self.clear_items()
         self._add_text_dropdown(custom_text or "Stopped . . .")
+
         await Messenger.send_message_no_reset(view=self)
         self.stop()
 

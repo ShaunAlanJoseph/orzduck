@@ -7,6 +7,7 @@ from database.db import DB
 from orzduck_cog import OrzDuckCog
 from config import DISCORD_API_TOKEN, HQ_CHANNEL_ID
 from utils.discord.disc_utils import fetch_channel
+from utils.context_manager import ContextManager
 
 
 basicConfig(level=INFO)
@@ -14,6 +15,7 @@ basicConfig(level=INFO)
 
 async def main():
     await DB.establish_connection()
+    ContextManager.setup_context_manager()
 
     bot = commands.Bot(command_prefix="!", intents=Intents.all(), help_command=None)
 
