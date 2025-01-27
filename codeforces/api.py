@@ -7,6 +7,26 @@ from requests import get
 from typing import Any, Dict, Optional, List, Tuple
 from logging import error, debug
 
+class Problem:
+    """
+    Onject which stores information about a single codeforces Problem.
+    """
+    def __init__(self, data: Tuple[Dict[str, Any], Dict[str, Any]]):
+        self.contestId: int = data[0].get("contestId", 0)
+        self.problemsetName: Optional[str] = data[0].get("problemsetName", None)
+        self.index: str = data[0]["index"]
+        self.name: str = data[0]["name"]
+        self.type: Optional[str] = data[0].get("type", None)
+        self.rating: Optional[int] = data[0].get("rating", None)
+        self.tags: Optional[List[str]] = data[0].get("tags", None)
+        self.solvedCount: Optional[int] = data[1].get("solvedCount", None)
+    
+    def pretty_key(self) -> Tuple[int, str]:
+        """
+        Returns a tuple (contestId, index) for the given problem.
+        """
+        return (self.contestId, self.index)
+
 def query_api(url: str) -> Any:
     """
     Sends a GET request to a specified URL and returns the JSON response.
@@ -19,22 +39,6 @@ def query_api(url: str) -> Any:
     
     debug(f"Response: {response.json()}")
     return response.json()
-
-class Problem:
-    """
-    Onject which stores information about a single codeforces Problem.
-    """
-    def __init__(self, data: Tuple[Dict[str, Any], Dict[str, Any]]):
-        self.contestId: int = data[0].get("contestId", 0)
-        self.problemsetName: Optional[str] = data[0].get("problemsetName", None)
-        self.index: str = data[0]["index"]
-        self.name: str = data[0]["name"]
-        self.type = data[0]["type"]
-        self.rating: Optional[int] = data[0].get("rating", None)
-        self.tags: List[str] = data[0]["tags"]
-        self.solvedCount: int = data[1]["solvedCount"]
-    def print_pretty(self):
-        print(self.contestId, self.index, self.name)
 
 def get_problem_list() -> Any:
     """
@@ -56,3 +60,5 @@ def get_user_data(user: str) -> Any:
 
 def get_user_submissions(user: str) -> Any:
     pass
+
+get_problem_list()
