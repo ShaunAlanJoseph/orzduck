@@ -1,11 +1,17 @@
-from os import getenv
+import os
 from dotenv import load_dotenv
 from typing import Dict, Any
 
 load_dotenv()
 
+def getenv(key: str) -> str:
+    value = os.getenv(key)
+    if not value:
+        raise ValueError(f"Missing environment variable: {key}")
+    return value
+
 DISCORD_API_TOKEN = getenv("DISCORD_API_TOKEN")
-HEADQUARTERS_CHANNEL_ID = int(getenv("HEADQUARTERS_CHANNEL_ID") or 0)
+HQ_CHANNEL_ID = int(getenv("HQ_CHANNEL_ID") or 0)
 
 DB_URL = getenv("DB_URL")
 DB_PORT = getenv("DB_PORT")

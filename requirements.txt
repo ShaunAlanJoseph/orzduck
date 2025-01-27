@@ -1,5 +1,4 @@
 python-dotenv
-discord
 discord.py
 asyncpg
 tortoise-orm
