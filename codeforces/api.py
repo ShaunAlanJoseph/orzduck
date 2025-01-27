@@ -21,6 +21,9 @@ def query_api(url: str) -> Any:
     return response.json()
 
 class Problem:
+    """
+    Onject which stores information about a single codeforces Problem.
+    """
     def __init__(self, data: Tuple[Dict[str, Any], Dict[str, Any]]):
         self.contestId: int = data[0].get("contestId", 0)
         self.problemsetName: Optional[str] = data[0].get("problemsetName", None)
