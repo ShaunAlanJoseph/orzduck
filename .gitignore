@@ -1,0 +1,11 @@
+# Files to ignore
+*.env
+temp*
+desktop.ini
+
+# Folders to ignore
+.venv/
+.vscode/
+local/
+logs/
+
