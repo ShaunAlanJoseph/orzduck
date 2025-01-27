@@ -4,3 +4,4 @@ discord.py
 asyncpg
 tortoise-orm
 Pillow
+requests
