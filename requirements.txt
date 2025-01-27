@@ -1,5 +1,6 @@
 python-dotenv
 discord
 discord.py
-psycopg2
+asyncpg
+tortoise-orm
 Pillow

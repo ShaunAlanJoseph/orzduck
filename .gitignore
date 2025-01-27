@@ -6,6 +6,7 @@ desktop.ini
 # Folders to ignore
 .venv/
 .vscode/
+__pycache__/
 local/
 logs/
 
