@@ -3,7 +3,7 @@ from discord.ext.commands import Cog, Bot  # type: ignore
 from logging import info
 
 from utils.context_manager import ctx_mgr
-from orz_modules.utils import is_admin_app_command
+from orz_modules.utils import is_admin_app_command, is_user_app_command
 
 
 class OrzDuckCog(Cog):
@@ -29,4 +29,11 @@ class OrzDuckCog(Cog):
 
         ctx_mgr().set_init_interaction(interaction)
         await orz_admin()
+    
+    @app_commands.command(name="register", description="Register yourself!")
+    @is_user_app_command(invert=True)
+    async def orz_register(self, interaction: Interaction):
+        from orz_modules.user import orz_register
 
+        ctx_mgr().set_init_interaction(interaction)
+        await orz_register()

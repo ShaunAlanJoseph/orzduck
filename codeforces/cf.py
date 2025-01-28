@@ -1,9 +1,28 @@
 from random import sample
+from enum import Enum
 from typing import Any, Dict, List, Set, Tuple
 
 from codeforces.api import get_user_submissions, get_users_info
 from codeforces.models import CFProblem, CFSubmission, CFUser
 from database.cf_queries import get_problems_list
+
+
+class Verdict(Enum):
+    FAILED = "FAILED"
+    OK = "OK"
+    PARTIAL = "PARTIAL"
+    COMPILATION_ERROR = "COMPILATION_ERROR"
+    RUNTIME_ERROR = "RUNTIME_ERROR"
+    WRONG_ANSWER = "WRONG_ANSWER"
+    TIME_LIMIT_EXCEEDED = "TIME_LIMIT_EXCEEDED"
+    MEMORY_LIMIT_EXCEEDED = "MEMORY_LIMIT_EXCEEDED"
+    IDLENESS_LIMIT_EXCEEDED = "IDLENESS_LIMIT_EXCEEDED"
+    SECURITY_VIOLATED = "SECURITY_VIOLATED"
+    CRASHED = "CRASHED"
+    INPUT_PREPARATION_CRASHED = "INPUT_PREPARATION_CRASHED"
+    CHALLENGED = "CHALLENGED"
+    SKIPPED = "SKIPPED"
+    TESTING = "TESTING"
 
 
 async def get_handle_verfication_problem(handle: str) -> CFProblem:
