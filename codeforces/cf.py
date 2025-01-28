@@ -1,8 +1,8 @@
 from random import sample
 from typing import Any, Dict, List, Set, Tuple
 
-from codeforces.api.api import get_user_submissions, get_users_info
-from codeforces.api.models import CFProblem, CFSubmission, CFUser
+from codeforces.api import get_user_submissions, get_users_info
+from codeforces.models import CFProblem, CFSubmission, CFUser
 from database.cf_queries import get_problems_list
 
 
