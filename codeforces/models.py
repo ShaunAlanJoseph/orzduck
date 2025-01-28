@@ -9,7 +9,6 @@ class CFProblem:
     """
 
     contestId: int = -1
-    problemsetName: str = ""
     index: str = ""
     name: str = ""
     type: str = ""
@@ -21,29 +20,34 @@ class CFProblem:
     def __hash__(self) -> int:
         return hash(self.pretty_key())
 
+    def __post_init__(self):
+        self.link = (
+            f"https://codeforces.com/problemset/problem/{self.contestId}/{self.index}"
+        )
+
     @classmethod
     def create(cls, data: Tuple[Dict[str, Any], Dict[str, Any]]):
+        contestid = data[0].get("contestId", -1)
+        if contestid == -1:
+            contestid = data[0].get("contestid", -1)
+        solvedCount = data[1].get("solvedCount", -1)
+        if solvedCount == -1:
+            solvedCount = data[0].get("solvedcount", -1)
+
         return cls(
-            contestId=data[0].get("contestId", -1),
-            problemsetName=data[0].get("problemsetName", ""),
+            contestId=contestid,
             index=data[0].get("index", ""),
             name=data[0].get("name", ""),
             type=data[0].get("type", ""),
             points=data[0].get("points", -1.0),
             rating=data[0].get("rating", -1),
             tags=data[0].get("tags", []),
-            solvedCount=data[1].get("solvedCount", -1),
+            solvedCount=solvedCount,
         )
 
     @classmethod
     def only_problem(cls, data: Dict[str, Any]):
         return cls.create((data, {}))
-
-    @property
-    def link(self) -> str:
-        return (
-            f"https://codeforces.com/problemset/problem/{self.contestId}/{self.index}"
-        )
 
     def pretty_key(self) -> Tuple[int, str]:
         return (self.contestId, self.index)
@@ -77,7 +81,60 @@ class CFUser:
 
     @classmethod
     def create(cls, data: Dict[str, Any]):
-        return cls(**{k: data.get(k, v) for k, v in cls.__annotations__.items()})
+        vkId = data.get("vkId", "")
+        if vkId == "":
+            vkId = data.get("vkid", "")
+        openId = data.get("openId", "")
+        if openId == "":
+            openId = data.get("openid", "")
+        firstName = data.get("firstName", "")
+        if firstName == "":
+            firstName = data.get("firstname", "")
+        lastName = data.get("lastName", "")
+        if lastName == "":
+            lastName = data.get("lastname", "")
+        maxRank = data.get("maxRank", "")
+        if maxRank == "":
+            maxRank = data.get("maxrank", "")
+        maxRating = data.get("maxRating", -1)
+        if maxRating == -1:
+            maxRating = data.get("maxrating", -1)
+        lastOnlineTimeSeconds = data.get("lastOnlineTimeSeconds", -1)
+        if lastOnlineTimeSeconds == -1:
+            lastOnlineTimeSeconds = data.get("lastonlinetimeseconds", -1)
+        registrationTimeSeconds = data.get("registrationTimeSeconds", -1)
+        if registrationTimeSeconds == -1:
+            registrationTimeSeconds = data.get("registrationtimeseconds", -1)
+        friendOfCount = data.get("friendOfCount", -1)
+        if friendOfCount == -1:
+            friendOfCount = data.get("friendofcount", -1)
+        titlePhoto = data.get("titlePhoto", "")
+        if titlePhoto == "":
+            titlePhoto = data.get("titlephoto", "")
+
+        return cls(
+            handle=data.get("handle", ""),
+            email=data.get("email", ""),
+            vkId=vkId,
+            openId=openId,
+            firstName=firstName,
+            lastName=lastName,
+            country=data.get("country", ""),
+            city=data.get("city", ""),
+            organization=data.get("organization", ""),
+            contribution=data.get("contribution", -1),
+            rank=data.get("rank", ""),
+            rating=data.get("rating", -1),
+            maxRank=maxRank,
+            maxRating=maxRating,
+            lastOnlineTimeSeconds=lastOnlineTimeSeconds,
+            registrationTimeSeconds=registrationTimeSeconds,
+            friendOfCount=friendOfCount,
+            avatar=data.get("avatar", ""),
+            titlePhoto=titlePhoto,
+        )
+
+        # return cls(**{k: data.get(k, v) for k, v in cls.__annotations__.items()})
 
 
 @dataclass

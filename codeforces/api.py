@@ -4,8 +4,9 @@ Handles queries for the Codeforces API.
 """
 
 from logging import debug, error
-from requests import get
 from typing import Any, List
+
+from requests import get
 
 from codeforces.models import CFProblem, CFSubmission, CFUser
 
@@ -17,6 +18,7 @@ USER_STATUS_URL = f"{CODEFORCES_API_BASE}user.status"
 
 class APIQueryException(Exception):
     """Custom exception for failed API queries."""
+
     pass
 
 
@@ -32,7 +34,7 @@ def query_api(url: str) -> Any:
 
     debug(f"Response: {response.json()}")
     return response.json()
-    
+
 
 def get_problem_list() -> List[CFProblem]:
     """
@@ -41,9 +43,17 @@ def get_problem_list() -> List[CFProblem]:
     """
     data = query_api(PROBLEMSET_URL)
     problems: List[CFProblem] = []
-    for prob, stat in zip(data["result"]["problems"], data["result"]["problemStatistics"]):
-        p = CFProblem((prob, stat))  # type: ignore
-        if p.contestId != 0:
+    for prob, stat in zip(
+        data["result"]["problems"], data["result"]["problemStatistics"]
+    ):
+        p = CFProblem.create((prob, stat))  # type: ignore
+        if p.contestId != -1:
+            print("------")
+            print(p.contestId)
+            print(p.index)
+            print(p.name)
+            print(p.link)
+            print("------")
             problems.append(p)
     return problems
 
@@ -71,4 +81,4 @@ def get_user_submissions(handle: str, count: int = 10000) -> list[CFSubmission]:
     Returns a list of specified user's submissions.
     """
     data = query_api(f"{USER_STATUS_URL}?handle={handle}&count={count}")
-    return [CFSubmission(x) for x in data["result"]]
+    return [CFSubmission.create(x) for x in data["result"]]

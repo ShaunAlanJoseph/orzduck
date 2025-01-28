@@ -1,5 +1,5 @@
-from random import sample
 from enum import Enum
+from random import sample
 from typing import Any, Dict, List, Set, Tuple
 
 from codeforces.api import get_user_submissions, get_users_info
@@ -106,7 +106,11 @@ def _create_problem_list(problems: List[Dict[str, Any]]) -> List[CFProblem]:
     """
     Create a list of CFProblem objects from a list of dictionaries.
     """
-    return [CFProblem(**prob) for prob in problems]
+    cfproblems = [CFProblem.create((prob, {})) for prob in problems]
+    print("---")
+    print(cfproblems[0])
+    print("---")
+    return cfproblems
 
 
 def _filter_problems(problems: List[CFProblem], users: List[CFUser]) -> List[CFProblem]:
@@ -117,7 +121,9 @@ def _filter_problems(problems: List[CFProblem], users: List[CFUser]) -> List[CFP
 
     for i in users:
         user_submissions: List[CFSubmission] = get_user_submissions(i.handle)
-        user_solved = {sub.problem for sub in user_submissions if sub.verdict == Verdict.OK}
+        user_solved = {
+            sub.problem for sub in user_submissions if sub.verdict == Verdict.OK
+        }
         global_user_solved |= user_solved
 
     return [prob for prob in problems if prob not in global_user_solved]

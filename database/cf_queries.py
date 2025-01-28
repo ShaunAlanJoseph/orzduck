@@ -1,4 +1,4 @@
-from typing import List, TYPE_CHECKING, Dict, Any
+from typing import TYPE_CHECKING, Any, Dict, List
 
 from database.db import DB
 
