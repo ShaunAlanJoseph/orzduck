@@ -80,6 +80,7 @@ async def get_duel_problems(
 ) -> List[CFProblem]:
     """
     Get a list of problems for a duel between two users with the given ratings.
+    :raises ValueError: if not enough problems are found
     """
     user_1, user_2 = get_users_info([handle_1, handle_2])
 

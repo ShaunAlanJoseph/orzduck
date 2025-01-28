@@ -20,7 +20,7 @@ class OrzDuckCog(Cog):
         name="orz", description="OTZ"
     )
     async def orz(self, interaction: Interaction):
-        await interaction.response.send_message("orz perf!")
+        await interaction.response.send_message("quack!")
     
     @app_commands.command(name="admin", description="High level admin stuff!")
     @is_admin_app_command()
@@ -37,3 +37,12 @@ class OrzDuckCog(Cog):
 
         ctx_mgr().set_init_interaction(interaction)
         await orz_register()
+    
+    @app_commands.command(name="duel_tictac", description="Start a TicTacToe duel!")
+    @is_user_app_command()
+    async def orz_duel_tictac(self, interaction: Interaction, rating: int = 900):
+        from orz_modules.duel import orz_duel_tictac
+
+        ctx_mgr().set_init_interaction(interaction)
+        await orz_duel_tictac(rating)
+    

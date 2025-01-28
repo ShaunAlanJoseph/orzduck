@@ -24,8 +24,6 @@ class BaseView(View):
     ):
         # list of users to interact with the view
         self._users = (users or []) + ([user] if user else [])
-        if not self._users:
-            raise ValueError("Users must be specified.")
 
         # to lock interaction with the view
         self._lock = False
