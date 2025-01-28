@@ -1,4 +1,4 @@
-from typing import List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING, Dict, Any
 
 from database.db import DB
 
@@ -76,9 +76,6 @@ async def dump_users(users: List["CFUser"]):
 async def clear_users():
     query = "TRUNCATE TABLE cf_user"
     await DB.execute_query(query)
-from typing import Any, Dict, List
-
-from db import DB
 
 
 async def get_problems_list(min_rating: int, max_rating: int) -> List[Dict[Any, Any]]:

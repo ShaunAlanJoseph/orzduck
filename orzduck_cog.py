@@ -30,7 +30,7 @@ class OrzDuckCog(Cog):
         ctx_mgr().set_init_interaction(interaction)
         await orz_admin()
     
-    @app_commands.command(name="register", description="Register yourself!")
+    @app_commands.command(name="register", description="Register yourself?")
     @is_user_app_command(invert=True)
     async def orz_register(self, interaction: Interaction):
         from orz_modules.user import orz_register

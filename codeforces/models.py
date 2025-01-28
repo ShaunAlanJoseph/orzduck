@@ -13,6 +13,7 @@ class CFProblem:
     index: str = ""
     name: str = ""
     type: str = ""
+    points: float = -1.0
     rating: int = -1
     tags: List[str] = field(default_factory=list)
     solvedCount: int = -1
@@ -28,6 +29,7 @@ class CFProblem:
             index=data[0].get("index", ""),
             name=data[0].get("name", ""),
             type=data[0].get("type", ""),
+            points=data[0].get("points", -1.0),
             rating=data[0].get("rating", -1),
             tags=data[0].get("tags", []),
             solvedCount=data[1].get("solvedCount", -1),

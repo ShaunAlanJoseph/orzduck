@@ -25,25 +25,22 @@ class Verdict(Enum):
     TESTING = "TESTING"
 
 
-async def get_handle_verfication_problem(handle: str) -> CFProblem:
+async def get_handle_verification_problem() -> CFProblem:
     """
     Get a problem for handle verification.
     """
-    user = get_users_info([handle])[0]
-
     all_problems = await _fetch_all_problems(max_rating=800)
-    problem_set = _filter_problems(problems=all_problems, users=[user])
-
+    problem_set = _filter_problems(problems=all_problems, users=[])
     return sample(problem_set, 1)[0]
 
 
-async def get_user_problem_status(
+def get_user_problem_status(
     handle: str, problem: CFProblem, time: int, after: bool = True
 ) -> List[Tuple[int, str]]:
-    return (await get_user_problems_status(handle, [problem], time, after))[problem]
+    return (get_user_problems_status(handle, [problem], time, after))[problem]
 
 
-async def get_user_problems_status(
+def get_user_problems_status(
     handle: str, problems: List[CFProblem], time: int, after: bool = True
 ) -> Dict[CFProblem, List[Tuple[int, str]]]:
     """
@@ -120,7 +117,7 @@ def _filter_problems(problems: List[CFProblem], users: List[CFUser]) -> List[CFP
 
     for i in users:
         user_submissions: List[CFSubmission] = get_user_submissions(i.handle)
-        user_solved = {sub.problem for sub in user_submissions if sub.verdict == "OK"}
+        user_solved = {sub.problem for sub in user_submissions if sub.verdict == Verdict.OK}
         global_user_solved |= user_solved
 
     return [prob for prob in problems if prob not in global_user_solved]
