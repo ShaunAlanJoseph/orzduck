@@ -37,6 +37,12 @@ class CFProblem:
     def only_problem(cls, data: Dict[str, Any]):
         return cls.create((data, {}))
 
+    @property
+    def link(self) -> str:
+        return (
+            f"https://codeforces.com/problemset/problem/{self.contestId}/{self.index}"
+        )
+
     def pretty_key(self) -> Tuple[int, str]:
         return (self.contestId, self.index)
 
