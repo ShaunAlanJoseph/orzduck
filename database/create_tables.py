@@ -29,7 +29,7 @@ async def create_tables():
         "winner BIGINT,"
         "problems TEXT[] NOT NULL,"
         "progress TEXT[] NOT NULL,"
-        "tournament_id BIGINT"
+        "tournament_id TEXT"
         ")"
     )
     await DB.execute_query(query)
@@ -46,7 +46,7 @@ async def create_tables():
         "winner BIGINT,"
         "problems TEXT[] NOT NULL,"
         "progress TEXT[] NOT NULL,"
-        "tournament_id BIGINT"
+        "tournament_id TEXT"
         ")"
     )
     await DB.execute_query(query)
@@ -63,7 +63,7 @@ async def create_tables():
         "winner BIGINT,"
         "problem TEXT NOT NULL,"
         "progress TEXT NOT NULL,"
-        "tournament_id BIGINT"
+        "tournament_id TEXT"
         ")"
     )
     await DB.execute_query(query)

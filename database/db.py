@@ -47,7 +47,7 @@ class DB:
         try:
             query = DB.format_query(query)
             conn = DB.get_connection()
-            result: List[Dict[str, Any]] = await conn.execute_query_dict(query, *args)  # type: ignore
+            result: List[Dict[str, Any]] = await conn.execute_query_dict(query, args)  # type: ignore
             return result
         except Exception as exc:
             error(f"Error executing query: {exc}, query: {query}, args: {args}")
