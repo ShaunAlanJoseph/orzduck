@@ -17,6 +17,9 @@ class Problem:
     tags: List[str] = field(default_factory=list)
     solvedCount: int = -1
 
+    def __hash__(self) -> int:
+        return hash(self.pretty_key())
+
     @classmethod
     def create(cls, data: Tuple[Dict[str, Any], Dict[str, Any]]):
         return cls(
@@ -88,6 +91,9 @@ class Submission:
     timeConsumedMillis: int = -1
     memoryConsumedBytes: int = -1
     points: float = -1.0
+
+    def __hash__(self) -> int:
+        return hash((self.id, self.contestId, self.creationTimeSeconds))
 
     @classmethod
     def create(cls, data: Dict[str, Any]):

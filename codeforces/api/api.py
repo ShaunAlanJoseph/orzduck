@@ -57,7 +57,7 @@ def get_users_info(handles: List[str]) -> List[User]:
     Returned User Information is specified at https://codeforces.com/apiHelp/objects#User.
     """
     url = f"{USER_INFO_URL}?handles={';'.join(handles)}"
-    return [User(x) for x in query_api(url)["result"]]
+    return [User.create(x) for x in query_api(url)["result"]]
 
 
 def get_user_submissions(handle: str, count: int = 10000) -> list[Submission]:
