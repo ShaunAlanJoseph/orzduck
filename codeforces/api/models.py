@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Tuple
 
 
 @dataclass
-class Problem:
+class CFProblem:
     """
     Object which stores information about a single Codeforces Problem.
     """
@@ -42,7 +42,7 @@ class Problem:
 
 
 @dataclass
-class User:
+class CFUser:
     """
     Object which stores information about a single Codeforces user.
     """
@@ -73,7 +73,7 @@ class User:
 
 
 @dataclass
-class Submission:
+class CFSubmission:
     """
     Object which stores information about a single Codeforces submission.
     """
@@ -82,7 +82,7 @@ class Submission:
     contestId: int = -1
     creationTimeSeconds: int = -1
     relativeTimeSeconds: int = -1
-    problem: Problem = field(default_factory=Problem)
+    problem: CFProblem = field(default_factory=CFProblem)
     author: Dict[str, Any] = field(default_factory=dict)
     programmingLanguage: str = ""
     verdict: str = ""
@@ -102,7 +102,7 @@ class Submission:
             contestId=data.get("contestId", -1),
             creationTimeSeconds=data.get("creationTimeSeconds", -1),
             relativeTimeSeconds=data.get("relativeTimeSeconds", -1),
-            problem=Problem.only_problem(data.get("problem", {})),
+            problem=CFProblem.only_problem(data.get("problem", {})),
             author=data.get("author", {}),
             programmingLanguage=data.get("programmingLanguage", ""),
             verdict=data.get("verdict", ""),

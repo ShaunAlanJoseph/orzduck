@@ -2,11 +2,11 @@ from random import sample
 from typing import Any, Dict, List, Set, Tuple
 
 from codeforces.api.api import get_user_submissions, get_users_info
-from codeforces.api.models import Problem, Submission, User
+from codeforces.api.models import CFProblem, CFSubmission, CFUser
 from database.cf_queries import get_problems_list
 
 
-async def get_handle_verfication_problem(handle: str) -> Problem:
+async def get_handle_verfication_problem(handle: str) -> CFProblem:
     """
     Get a problem for handle verification.
     """
@@ -18,16 +18,22 @@ async def get_handle_verfication_problem(handle: str) -> Problem:
     return sample(problem_set, 1)[0]
 
 
+async def get_user_problem_status(
+    handle: str, problem: CFProblem, time: int, after: bool = True
+) -> List[Tuple[int, str]]:
+    return (await get_user_problems_status(handle, [problem], time, after))[problem]
+
+
 async def get_user_problems_status(
-    handle: str, problems: List[Problem], time: int, after: bool = True
-):
+    handle: str, problems: List[CFProblem], time: int, after: bool = True
+) -> Dict[CFProblem, List[Tuple[int, str]]]:
     """
     Get the status of a user's submissions for a list of problems.
     """
     user_submissions = get_user_submissions(handle)
 
-    # Create a dictionary to store the submissions of each problem in a {Problem : [(Submission time, Submission verdict)]} format
-    problem_based_submission: Dict[Problem, List[Tuple[int, str]]] = {}
+    # Create a dictionary to store the submissions of each problem in a {CFProblem : [(CFSubmission time, CFSubmission verdict)]} format
+    problem_based_submission: Dict[CFProblem, List[Tuple[int, str]]] = {}
     for problem in problems:
         problem_based_submission[problem] = []
 
@@ -48,14 +54,14 @@ async def get_user_problems_status(
         problem_based_submission[problem].sort(key=lambda x: x[0])
 
     # @TODO - @ShaunAlanJoseph
-    # Felt it would be better if we did {Problem : [Submission]} instead of {Problem : [(Submission time, Submission verdict)]}
+    # Felt it would be better if we did {CFProblem : [CFSubmission]} instead of {CFProblem : [(CFSubmission time, CFSubmission verdict)]}
 
     return problem_based_submission
 
 
 async def get_duel_problems(
     handle_1: str, handle_2: str, min_rating: int, max_rating: int, problem_count: int
-) -> List[Problem]:
+) -> List[CFProblem]:
     """
     Get a list of problems for a duel between two users with the given ratings.
     """
@@ -71,7 +77,7 @@ async def get_duel_problems(
 
 async def _fetch_all_problems(
     min_rating: int = 0, max_rating: int = 3500
-) -> List[Problem]:
+) -> List[CFProblem]:
     """
     Fetch all problems from the database.
     """
@@ -80,21 +86,21 @@ async def _fetch_all_problems(
     )
 
 
-def _create_problem_list(problems: List[Dict[str, Any]]) -> List[Problem]:
+def _create_problem_list(problems: List[Dict[str, Any]]) -> List[CFProblem]:
     """
-    Create a list of Problem objects from a list of dictionaries.
+    Create a list of CFProblem objects from a list of dictionaries.
     """
-    return [Problem(**prob) for prob in problems]
+    return [CFProblem(**prob) for prob in problems]
 
 
-def _filter_problems(problems: List[Problem], users: List[User]) -> List[Problem]:
+def _filter_problems(problems: List[CFProblem], users: List[CFUser]) -> List[CFProblem]:
     """
     Filter out problems solved by both users.
     """
-    global_user_solved: Set[Problem] = set()
+    global_user_solved: Set[CFProblem] = set()
 
     for i in users:
-        user_submissions: List[Submission] = get_user_submissions(i.handle)
+        user_submissions: List[CFSubmission] = get_user_submissions(i.handle)
         user_solved = {sub.problem for sub in user_submissions if sub.verdict == "OK"}
         global_user_solved |= user_solved
 
