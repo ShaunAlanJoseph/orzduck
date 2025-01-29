@@ -131,7 +131,7 @@ class UserVerificationView(BaseView):
 
         super().__init__(user=user.user_id)
 
-    def _add_item(self):
+    def _add_items(self):
         self.clear_items()
 
         if self.mode == "default":
@@ -168,7 +168,7 @@ class UserVerificationView(BaseView):
 
         submissions = get_user_problem_status(self.cf_handle, self.problem, self.start_time)
         for submission in submissions:
-            if submission[1] == Verdict.COMPILATION_ERROR:
+            if submission[1] == Verdict.COMPILATION_ERROR.value:
                 self.stop()
                 await _orz_register_verified(self.user)
                 return

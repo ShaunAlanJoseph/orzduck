@@ -48,12 +48,6 @@ def get_problem_list() -> List[CFProblem]:
     ):
         p = CFProblem.create((prob, stat))  # type: ignore
         if p.contestId != -1:
-            print("------")
-            print(p.contestId)
-            print(p.index)
-            print(p.name)
-            print(p.link)
-            print("------")
             problems.append(p)
     return problems
 
@@ -76,7 +70,8 @@ def get_user_info(handle: str) -> CFUser:
     return get_users_info([handle])[0]
 
 
-def get_user_submissions(handle: str, count: int = 10000) -> list[CFSubmission]:
+# def get_user_submissions(handle: str, count: int = 10000) -> list[CFSubmission]:
+def get_user_submissions(handle: str, count: int = 3) -> list[CFSubmission]:
     """
     Returns a list of specified user's submissions.
     """

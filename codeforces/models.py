@@ -9,6 +9,7 @@ class CFProblem:
     """
 
     contestId: int = -1
+    problemsetName: str = ""
     index: str = ""
     name: str = ""
     type: str = ""
@@ -19,6 +20,11 @@ class CFProblem:
 
     def __hash__(self) -> int:
         return hash(self.pretty_key())
+    
+    def __eq__(self, other: Any):
+        if not isinstance(other, CFProblem):
+            return False
+        return self.pretty_key() == other.pretty_key()
 
     def __post_init__(self):
         self.link = (
@@ -30,12 +36,16 @@ class CFProblem:
         contestid = data[0].get("contestId", -1)
         if contestid == -1:
             contestid = data[0].get("contestid", -1)
+        problemsetName = data[0].get("problemsetName", "")
+        if problemsetName == "":
+            problemsetName = data[0].get("problemsetname", "")
         solvedCount = data[1].get("solvedCount", -1)
         if solvedCount == -1:
             solvedCount = data[0].get("solvedcount", -1)
 
         return cls(
             contestId=contestid,
+            problemsetName=problemsetName,
             index=data[0].get("index", ""),
             name=data[0].get("name", ""),
             type=data[0].get("type", ""),

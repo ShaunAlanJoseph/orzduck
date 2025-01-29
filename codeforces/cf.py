@@ -60,7 +60,7 @@ def get_user_problems_status(
             if after
             else submission.creationTimeSeconds <= time
         ):
-            if submission.problem in list(problem_based_submission.keys()):
+            if submission.problem in problem_based_submission:
                 problem_based_submission[submission.problem].append(
                     (submission.creationTimeSeconds, submission.verdict)
                 )
@@ -108,9 +108,6 @@ def _create_problem_list(problems: List[Dict[str, Any]]) -> List[CFProblem]:
     Create a list of CFProblem objects from a list of dictionaries.
     """
     cfproblems = [CFProblem.create((prob, {})) for prob in problems]
-    print("---")
-    print(cfproblems[0])
-    print("---")
     return cfproblems
 
 
