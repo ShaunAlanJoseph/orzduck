@@ -120,7 +120,7 @@ def _filter_problems(problems: List[CFProblem], users: List[CFUser]) -> List[CFP
     for i in users:
         user_submissions: List[CFSubmission] = get_user_submissions(i.handle)
         user_solved = {
-            sub.problem for sub in user_submissions if sub.verdict == Verdict.OK
+            sub.problem for sub in user_submissions if sub.verdict == Verdict.OK.value
         }
         global_user_solved |= user_solved
 

@@ -1,12 +1,10 @@
 from enum import Enum
 from discord import File, Interaction
-from typing import List, Optional, TYPE_CHECKING
+from typing import List, Optional
 
 from utils.context_manager import ctx_mgr
 from utils.discord import BaseView, Messenger, BaseEmbed
 from orz_modules.user import User
-if TYPE_CHECKING:
-    from codeforces.models import CFProblem
 
 
 class Duel(Enum):
@@ -15,17 +13,26 @@ class Duel(Enum):
     CLASSIC = "Classic"
 
 
+class DuelStatus(Enum):
+    ONGOING = "ongoing"
+    FINISHED = "finished"
+    DRAW = "draw"
+    TIMED_OUT = "timed_out"
+    CANCELLED = "cancelled"
+
+
 class DuelWaitingView(BaseView):
     @classmethod
-    async def send_view(cls, duel_mode: Duel, player1: int, rating: int):
-        view = cls(duel_mode, player1)
+    async def send_view(cls, duel_mode: Duel, player1: int, rating: int, time_limit: int):
+        view = cls(duel_mode, player1, rating, time_limit)
         await view._send_view()
     
-    def __init__(self, duel_mode: Duel, player1: int, rating: int):
+    def __init__(self, duel_mode: Duel, player1: int, rating: int, time_limit: int):
         self.duel_mode = duel_mode
         self.player1: int = player1
         self.player2: Optional[int] = None
         self.rating = rating
+        self.time_limit = time_limit
 
         self.mode = "one_player"
         super().__init__()
@@ -52,12 +59,11 @@ class DuelWaitingView(BaseView):
         user_id = interaction.user.id
         custom_id = interaction.data["custom_id"]  # type: ignore
 
-        await interaction.response.defer()
-
         if custom_id == "join":
             if user_id == self.player1:
-                await Messenger.send_message(
-                    content="You have already joined the duel."
+                await interaction.response.send_message(
+                    content="You have already joined the duel.",
+                    ephemeral=True
                 )
                 return False
             
@@ -65,8 +71,9 @@ class DuelWaitingView(BaseView):
                 await User.load_user(user_id)
                 return True
             except IndexError:
-                await Messenger.send_message(
-                    content="You need to register yourself first!"
+                await interaction.response.send_message(
+                    content="You need to register yourself first!",
+                    ephemeral=True
                 )
                 return False
             
@@ -85,12 +92,15 @@ class DuelWaitingView(BaseView):
         else:
             raise ValueError(f"Invalid custom_id: {custom_id}")
 
-        await Messenger.send_message_ephemeral(
-            content="You aren't allowed to interact with this!"
+        await interaction.response.send_message(
+            content="You aren't allowed to interact with this!",
+            ephemeral=True
         )
         return False
     
     async def _button_clicked(self, interaction: Interaction, custom_id: str) -> None:
+        await interaction.response.defer()
+
         if custom_id == "join":
             self.mode = "two_players"
             self.player2 = interaction.user.id
@@ -103,7 +113,7 @@ class DuelWaitingView(BaseView):
             if self.duel_mode == Duel.TICTAC:
                 self.stop()
                 assert self.player2 is not None
-                await _orz_duel_tictac(self.player1, self.player2, self.rating)
+                await _orz_duel_tictac(self.player1, self.player2, self.rating, self.time_limit)
                 return
             
             else:
@@ -119,15 +129,21 @@ class DuelWaitingView(BaseView):
             embed = BaseEmbed(title="Waiting for player . . .")
             embed.add_field(name="Duel Mode", value=f"{self.duel_mode.value}", inline=False)
             embed.add_field(name="Player 1", value=f"<@{self.player1}>")
+            embed.add_field(name="")
             embed.add_field(name="Player 2", value="???")
-            embed.add_field(name="Rating", value=f"{self.rating}", inline=False)
+            embed.add_field(name="Rating", value=f"{self.rating}")
+            embed.add_field(name="")
+            embed.add_field(name="Time Limit", value=f"{self.time_limit} minutes")
         
         elif self.mode == "two_players":
             embed = BaseEmbed(title="Ready to Start!")
             embed.add_field(name="Duel Mode", value=f"{self.duel_mode.value}", inline=False)
             embed.add_field(name="Player 1", value=f"<@{self.player1}>")
+            embed.add_field(name="")
             embed.add_field(name="Player 2", value=f"<@{self.player2}>")
-            embed.add_field(name="Rating", value=f"{self.rating}", inline=False)
+            embed.add_field(name="Rating", value=f"{self.rating}")
+            embed.add_field(name="")
+            embed.add_field(name="Time Limit", value=f"{self.time_limit} minutes")
         
         else:
             raise ValueError(f"Invalid mode: {self.mode}")
@@ -137,20 +153,22 @@ class DuelWaitingView(BaseView):
         return embed, files
 
 
-async def orz_duel_tictac(rating: int):
+async def orz_duel_tictac(rating: int, time_limit: int):
     player1 = ctx_mgr().get_user_id()
-    await DuelWaitingView.send_view(Duel.TICTAC, player1, rating)
+    time_limit = min(time_limit, 300)
+    await DuelWaitingView.send_view(Duel.TICTAC, player1, rating, time_limit)
 
 
-async def _orz_duel_tictac(p1: int, p2: int, rating: int):
+async def _orz_duel_tictac(p1: int, p2: int, rating: int, time_limit: int):
     player1 = await User.load_user(p1)
     player2 = await User.load_user(p2)
 
-    await _orz_duel_tictac_select_problems(player1, player2, rating)
+    await _orz_duel_tictac_select_problems(player1, player2, rating, time_limit)
 
 
-async def _orz_duel_tictac_select_problems(player1: User, player2: User, rating: int):
+async def _orz_duel_tictac_select_problems(player1: User, player2: User, rating: int, time_limit: int):
     from codeforces.cf import get_duel_problems
+    from duels.tictac_duel import TicTacDuel, TickTacDuelView
 
     try:
         assert player1.cf_handle is not None
@@ -167,4 +185,5 @@ async def _orz_duel_tictac_select_problems(player1: User, player2: User, rating:
         await Messenger.send_message(embed=embed)
         return
     
-    
+    duel = await TicTacDuel.create_duel(player1.user_id, player2.user_id, problems, rating, time_limit) 
+    await TickTacDuelView.send_view(duel)

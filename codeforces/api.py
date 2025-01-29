@@ -71,7 +71,7 @@ def get_user_info(handle: str) -> CFUser:
 
 
 # def get_user_submissions(handle: str, count: int = 10000) -> list[CFSubmission]:
-def get_user_submissions(handle: str, count: int = 3) -> list[CFSubmission]:
+def get_user_submissions(handle: str, count: int = 10000) -> list[CFSubmission]:
     """
     Returns a list of specified user's submissions.
     """

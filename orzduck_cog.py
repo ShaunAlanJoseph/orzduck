@@ -40,9 +40,9 @@ class OrzDuckCog(Cog):
     
     @app_commands.command(name="duel_tictac", description="Start a TicTacToe duel!")
     @is_user_app_command()
-    async def orz_duel_tictac(self, interaction: Interaction, rating: int = 900):
+    async def orz_duel_tictac(self, interaction: Interaction, rating: int = 900, time_limit: int = 60):
         from orz_modules.duel import orz_duel_tictac
 
         ctx_mgr().set_init_interaction(interaction)
-        await orz_duel_tictac(rating)
+        await orz_duel_tictac(rating, time_limit)
     

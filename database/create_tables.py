@@ -20,10 +20,11 @@ async def create_tables():
     print("Creating duels_tictac table.")
     query = (
         "CREATE TABLE IF NOT EXISTS duels_tictac ("
-        "duel_id BIGINT PRIMARY KEY,"
+        "duel_id TEXT PRIMARY KEY,"
         "player1 BIGINT NOT NULL,"
         "player2 BIGINT NOT NULL,"
         "start_time BIGINT NOT NULL,"
+        "time_limit INT NOT NULL,"
         "end_time BIGINT,"
         "status TEXT NOT NULL,"
         "winner BIGINT,"
@@ -38,10 +39,11 @@ async def create_tables():
     print("Creating duels_mini table.")
     query = (
         "CREATE TABLE IF NOT EXISTS duels_mini ("
-        "duel_id BIGINT PRIMARY KEY,"
+        "duel_id TEXT PRIMARY KEY,"
         "player1 BIGINT NOT NULL,"
         "player2 BIGINT NOT NULL,"
         "start_time BIGINT NOT NULL,"
+        "time_limit INT NOT NULL,"
         "end_time BIGINT,"
         "status TEXT NOT NULL,"
         "winner BIGINT,"
@@ -56,10 +58,11 @@ async def create_tables():
     print("Creating duels_classic table.")
     query = (
         "CREATE TABLE IF NOT EXISTS duels_classic ("
-        "duel_id BIGINT PRIMARY KEY,"
+        "duel_id TEXT PRIMARY KEY,"
         "player1 BIGINT NOT NULL,"
         "player2 BIGINT NOT NULL,"
         "start_time BIGINT NOT NULL,"
+        "time_limit INT NOT NULL,"
         "end_time BIGINT,"
         "status TEXT NOT NULL,"
         "winner BIGINT,"

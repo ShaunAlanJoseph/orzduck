@@ -46,12 +46,14 @@ class BaseView(View):
             if self._acquire_lock():
                 return True
             else:
-                await Messenger.send_message_ephemeral(
-                    content="Please wait while the previous interaction is being processed!"
+                await interaction.response.send_message(
+                    content="Please wait while the previous interaction is being processed!",
+                    ephemeral=True,
                 )
         else:
-            await Messenger.send_message_ephemeral(
-                content="You aren't allowed to interact with this!"
+            await interaction.response.send_message(
+                content="You aren't allowed to interact with this!",
+                ephemeral=True,
             )
         return False
 
@@ -66,6 +68,7 @@ class BaseView(View):
 
         assert self._active_msg is not None
         ctx_mgr().set_active_msg(self._active_msg)
+        info(f"{self.__class__.__name__} timed out, active_msg: {self._active_msg.id}")
         await Messenger.send_message_no_reset(view=self)
     
     def __del__(self):

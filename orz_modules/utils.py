@@ -24,7 +24,7 @@ def is_user_app_command(invert: bool = False):
             await User.load_user(user_id)
             return True
         except IndexError:
-            await interaction.response.send_message(f"First use `/register` to register yourself. 😕")
+            await interaction.response.send_message(f"First use `/register` to register yourself. 😕", ephemeral=True)
             return False
     
     async def inverted_predicate(interaction: Interaction):
@@ -32,7 +32,7 @@ def is_user_app_command(invert: bool = False):
         user_id = interaction.user.id
         try:
             await User.load_user(user_id)
-            await interaction.response.send_message(f"You are already registered. 😕")
+            await interaction.response.send_message(f"You are already registered. 😕", ephemeral=True)
             return False
         except IndexError:
             return True
