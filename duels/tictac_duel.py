@@ -187,6 +187,7 @@ class TicTacDuel:
                 
                 if occupied_by_player + empty_in_file == 3:
                     self.status = DuelStatus.ONGOING.value
+                    return
 
         self.status = DuelStatus.DRAW.value
 
