@@ -327,9 +327,9 @@ class TickTacDuelView(BaseView):
         embed = BaseEmbed(title="TicTac Duel")
         if self.duel.status != DuelStatus.ONGOING.value:
             embed.add_field(name="")
-            if self.duel.status == DuelStatus.FINISHED.value:
+            if self.duel.status == DuelStatus.FINISHED:
                 embed.add_field(name="Winner 👑", value=f"<@{self.duel.winner}>")
-            elif self.duel.status == DuelStatus.DRAW.value:
+            elif self.duel.status == DuelStatus.DRAW:
                 embed.add_field(name="Draw 😕")
             else:
                 raise ValueError(f"Invalid status: {self.duel.status}")
