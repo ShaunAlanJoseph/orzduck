@@ -163,7 +163,7 @@ class UserVerificationView(BaseView):
 
     async def _get_embed(self):
         embed = BaseEmbed(
-            title="Handle Verification", description="Verifying your codeforces handle."
+            title="Handle Verification", description="Verify your Codeforces Handle by submitting a COMPILATION_ERROR to the given problem."
         )
         embed.add_field(name="CF Handle", value=self.cf_handle)
         embed.add_field(
@@ -175,7 +175,7 @@ class UserVerificationView(BaseView):
 
     async def check_done(self):
         curr_time = get_time()
-        if curr_time - self.start_time > 90:
+        if curr_time - self.start_time > 120:
             await self.stop_and_disable(custom_text="Verification Timed Out")
             return
 

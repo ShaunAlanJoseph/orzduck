@@ -111,7 +111,7 @@ class DuelWaitingView(BaseView):
 
         elif custom_id == "start":
             if self.duel_mode == Duel.TICTAC:
-                self.stop()
+                await self.stop_and_disable(custom_text="Starting . . .")
                 assert self.player2 is not None
                 await _orz_duel_tictac(self.player1, self.player2, self.rating, self.time_limit)
                 return

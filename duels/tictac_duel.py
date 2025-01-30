@@ -3,7 +3,7 @@ from discord import File, Interaction
 from io import BytesIO
 
 from utils.general import generate_string, get_time
-from utils.discord import BaseView, BaseEmbed
+from utils.discord import BaseView, BaseEmbed, Messenger
 from database import duel_queries
 from orz_modules.duel import DuelStatus
 from utils import image_handling as imgh
@@ -307,11 +307,18 @@ class TickTacDuelView(BaseView):
         await interaction.response.defer()
 
         if custom_id == "refresh":
+            await self._send_refreshing_duel_dropdown()
             await self.refresh_duel()
             return
 
         else:
             raise ValueError(f"Invalid custom_id: {custom_id}")
+    
+    async def _send_refreshing_duel_dropdown(self):
+        self.clear_items()
+        self._add_text_dropdown("Refreshing . . .")
+        self._active_msg = await Messenger.send_message_no_reset(view=self)
+        self._release_lock()
 
     async def refresh_duel(self) -> None:
         await self.duel.refresh_duel()
@@ -321,15 +328,14 @@ class TickTacDuelView(BaseView):
         await self._send_view()
         if self.duel.status == DuelStatus.FINISHED.value:
             self.stop()
-        self._release_lock()
 
     async def _get_embed(self):
         embed = BaseEmbed(title="TicTac Duel")
         if self.duel.status != DuelStatus.ONGOING.value:
             embed.add_field(name="")
-            if self.duel.status == DuelStatus.FINISHED:
+            if self.duel.status == DuelStatus.FINISHED.value:
                 embed.add_field(name="Winner 👑", value=f"<@{self.duel.winner}>")
-            elif self.duel.status == DuelStatus.DRAW:
+            elif self.duel.status == DuelStatus.DRAW.value:
                 embed.add_field(name="Draw 😕")
             else:
                 raise ValueError(f"Invalid status: {self.duel.status}")

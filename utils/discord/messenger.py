@@ -5,8 +5,6 @@ from typing import Optional, List, Dict, Any
 from utils.context_manager import ctx_mgr
 
 
-
-
 class Messenger:
     @staticmethod
     async def send_message_new(
@@ -31,19 +29,20 @@ class Messenger:
         for kwarg in ["content", "embed", "view", "files"]:
             if locals()[kwarg]:
                 kwargs[kwarg] = locals()[kwarg]
-
+        
         # First response to the interaction
-        if not interaction.response.is_done():
+        if message is None:
             await interaction.response.send_message(
                 **kwargs, allowed_mentions=allowed_mentions
             )
             message = await interaction.original_response()
-
-        # Follow responses to the interaction
+        
         else:
-            message = await interaction.followup.send(
-                **kwargs, allowed_mentions=allowed_mentions, wait=True
+            message = await message.reply(
+                **kwargs, allowed_mentions=allowed_mentions
             )
+
+        message = await message.channel.fetch_message(message.id)
 
         ctx_mgr().set_active_msg(message)
         ctx_mgr().set_send_new_msg(False)

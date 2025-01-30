@@ -70,7 +70,7 @@ class BaseView(View):
         assert self._active_msg is not None
         ctx_mgr().set_active_msg(self._active_msg)
         info(f"{self.__class__.__name__} timed out, active_msg: {self._active_msg.id}")
-        await Messenger.send_message_no_reset(view=self)
+        self._active_msg = await Messenger.send_message_no_reset(view=self)
     
     def __del__(self):
         assert self._active_msg is not None
@@ -85,7 +85,8 @@ class BaseView(View):
         self.clear_items()
         self._add_text_dropdown(custom_text or "Stopped . . .")
 
-        await Messenger.send_message_no_reset(view=self)
+        self._active_msg = await Messenger.send_message_no_reset(view=self)
+        self._release_lock()
         self.stop()
 
     def _acquire_lock(self) -> bool:
