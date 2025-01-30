@@ -69,6 +69,7 @@ class TicTacDuel:
         self.status: str = duel_data["status"]
         self.winner: Optional[int] = duel_data.get("winner")
         self.first_solve: Optional[int] = None
+        self.last_solved_coords: Optional[Tuple[int, int]] = None
         self.progress: List[str] = duel_data["progress"]
 
         self.rating: int = duel_data["rating"]
@@ -116,6 +117,7 @@ class TicTacDuel:
         col = [0] * 3
         diag = [0] * 2
         self.first_solve = None
+        self.last_solved_coords = None
         self.progress = ["~"] * len(self.problems_loaded)
         for time, problem, idx, player in timeline:
             if self.progress[idx] != "~":
@@ -126,6 +128,7 @@ class TicTacDuel:
             self.first_solve = self.first_solve or player
             self.progress[idx] = f"{player}~{time}"
             x, y = divmod(idx, 3)
+            self.last_solved_coords = (x, y)
             row[x] += 1
             col[y] += 1
             if x == y:
