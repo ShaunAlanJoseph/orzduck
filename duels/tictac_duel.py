@@ -1,11 +1,12 @@
-from typing import Dict, Any, Optional, List, Tuple, TYPE_CHECKING, Union
-
+from typing import Dict, Any, Optional, List, Tuple, TYPE_CHECKING
 from discord import File, Interaction
+from io import BytesIO
 
 from utils.general import generate_string, get_time
 from utils.discord import BaseView, BaseEmbed
 from database import duel_queries
 from orz_modules.duel import DuelStatus
+from utils import image_handling as imgh
 
 if TYPE_CHECKING:
     from codeforces.models import CFProblem
@@ -84,6 +85,9 @@ class TicTacDuel:
         self.player1_loaded = await User.load_user(self.player1)
         self.player2_loaded = await User.load_user(self.player2)
 
+        await self.player1_loaded.load_disc_user()
+        await self.player2_loaded.load_disc_user()
+
     async def refresh_duel(self):
         from codeforces.cf import get_user_problems_status, Verdict
 
@@ -140,10 +144,10 @@ class TicTacDuel:
                 self.status = DuelStatus.FINISHED.value
                 self.end_time = time
                 break
-        
+
         if self.status != DuelStatus.FINISHED.value and get_time() > self.end_time:
             self.status = DuelStatus.TIMED_OUT.value
-        
+
         await self.save_state()
 
     def get_board(self) -> List[List[Tuple[int, int]]]:
@@ -155,13 +159,13 @@ class TicTacDuel:
                 board[x][y] = player  # type: ignore
         return board
 
-    def get_board_status(self) -> Union[Tuple[str], Tuple[str, int, int]]:
+    def get_board_status(self) -> Tuple[str, int, int]:
         """
         Returns the current status of the board as FINISHED, ONGOING, or DRAW.
         
         If FINISHED, returns (FINISHED, winning_player, winning_file_index).
-        If DRAW, returns (DRAW,).
-        If ONGOING, returns (ONGOING,).
+        If DRAW, returns (DRAW, -1, -1).
+        If ONGOING, returns (ONGOING, -1, -1).
         """
         board = self.get_board()
         empty_cells: List[Tuple[int, int]] = []
@@ -186,10 +190,55 @@ class TicTacDuel:
                 empty_in_file = sum(1 for x, y in file if board[x][y][0] == 0)
                 
                 if occupied_by_player + empty_in_file == 3:
-                    return (DuelStatus.ONGOING.value,)
+                    return (DuelStatus.ONGOING.value, -1, -1)
 
-        return (DuelStatus.DRAW.value,)
-    
+        return (DuelStatus.DRAW.value, -1, -1)
+
+    async def _get_player1_img(self) -> BytesIO:
+        assert self.player1_loaded is not None
+        assert self.player1_loaded.disc_user is not None
+        player1_img = await self.player1_loaded.disc_user.display_avatar.read()
+        return BytesIO(player1_img)
+
+    async def _get_player2_img(self) -> BytesIO:
+        assert self.player2_loaded is not None
+        assert self.player2_loaded.disc_user is not None
+        player2_img = await self.player2_loaded.disc_user.display_avatar.read()
+        return BytesIO(player2_img)
+
+    async def get_board_img(self) -> BytesIO:
+        move_locations = [
+            [(50, 50), (350, 50), (650, 50)],
+            [(50, 350), (350, 350), (650, 350)],
+            [(50, 650), (350, 650), (650, 650)],
+        ]
+        move_size = (200, 200)
+
+        player1_img = imgh.load_image(await self._get_player1_img())
+        player1_img = imgh.extract_frames(player1_img)
+        player1_img = [imgh.resize(img, move_size) for img in player1_img]
+
+        player2_img = imgh.load_image(await self._get_player2_img())
+        player2_img = imgh.extract_frames(player2_img)
+        player2_img = [imgh.resize(img, move_size) for img in player2_img]
+
+        board_img = imgh.load_image_from_path("bin/tictac_board.png")
+        board_img = imgh.extract_frames(board_img)
+        layers = [board_img]
+        layers_coords = [(0, 0)]
+
+        board = self.get_board()
+        for i in range(3):
+            for j in range(3):
+                if board[i][j][0] == 0:
+                    continue
+                x, y = move_locations[i][j]
+                img = player1_img if board[i][j][0] == self.player1 else player2_img
+                layers.append(img)
+                layers_coords.append((x, y))
+
+        return imgh.stack_and_animate(layers, layers_coords=layers_coords)
+
     async def save_state(self):
         await duel_queries.save_tictac_duel(self)
 
@@ -202,29 +251,32 @@ class TickTacDuelView(BaseView):
 
     def __init__(self, duel: TicTacDuel):
         self.duel = duel
-        super().__init__(users=[self.duel.player1, self.duel.player2], timeout=60 * 60)
+        super().__init__(
+            users=[self.duel.player1, self.duel.player2],
+            timeout=60 * self.duel.time_limit + 300,
+        )
 
     def _add_items(self):
         self.clear_items()
 
-        board = self.duel.get_board()
-        for i in range(3):
-            for j in range(3):
-                idx = i * 3 + j
-                problem = self.duel.problems_loaded[idx]
-                if board[i][j][0] == 0:
-                    self._add_url_button(
-                        label=f"{idx + 1}",
-                        url=problem.link,
-                        row=i,
-                    )
-                else:
-                    emoji = "❌" if self.duel.first_solve == board[i][j][0] else "⭕"
-                    self._add_url_button(
-                        label=emoji,
-                        url=problem.link,
-                        row=i,
-                    )
+        # board = self.duel.get_board()
+        # for i in range(3):
+        #     for j in range(3):
+        #         idx = i * 3 + j
+        #         problem = self.duel.problems_loaded[idx]
+        #         if board[i][j][0] == 0:
+        #             self._add_url_button(
+        #                 label=f"{idx + 1}",
+        #                 url=problem.link,
+        #                 row=i,
+        #             )
+        #         else:
+        #             emoji = "❌" if self.duel.first_solve == board[i][j][0] else "⭕"
+        #             self._add_url_button(
+        #                 label=emoji,
+        #                 url=problem.link,
+        #                 row=i,
+        #             )
 
         if self.duel.status != DuelStatus.FINISHED.value:
             self._add_button(label="REFRESH", custom_id="refresh", row=3)
@@ -260,17 +312,31 @@ class TickTacDuelView(BaseView):
         embed.add_field(name="Player 1", value=f"<@{self.duel.player1}>")
         embed.add_field(name="Rating", value=f"{self.duel.rating}")
         embed.add_field(name="Player 2", value=f"<@{self.duel.player2}>")
-        embed.add_field(name="Start Time", value=f"<t:{self.duel.start_time}:R>")
-        embed.add_field(name="Duration", value=f"{self.duel.time_limit} minutes")
-        embed.add_field(name="End Time", value=f"<t:{self.duel.end_time}:R>")
+        embed.add_field(
+            name="",
+            value=(
+                f"**Duration:** {self.duel.time_limit} mins\n"
+                f"**Start:** <t:{self.duel.start_time}:t> \\~\\~ <t:{self.duel.start_time}:R>\n"
+                f"**End:** <t:{self.duel.end_time}:t> \\~\\~ <t:{self.duel.end_time}:R>"
+            ),
+            inline=False,
+        )
         embed.add_field(name="x - > - o - < - x", inline=False)
         board = self.duel.get_board()
         for i in range(3):
             for j in range(3):
-                value = "**~ ~ ~ ~**"
+                idx = 3 * i + j
+                problem = self.duel.problems_loaded[idx]
+                # name = f"Problem {idx + 1}."
+                value = f"**{idx + 1}. [{problem.contestId}-{problem.index}]({problem.link})**"
                 if board[i][j][0] != 0:
-                    value = f"<t:{board[i][j][1]}:R>\n<@{board[i][j][0]}>"
-                embed.add_field(name=f"Problem {i * 3 + j + 1}", value=value)
+                    time_taken = (board[i][j][1] - self.duel.start_time) // 60
+                    value += f"by <@{board[i][j][0]}> @ {time_taken} mins"
+                else:
+                    value += "by **~ ~ ~**"
+                embed.add_field(name="", value=value)
 
-        files: List[File] = []
+        board_img = await self.duel.get_board_img()
+        board_img = File(board_img, "board.gif")
+        files: List[File] = [board_img]
         return embed, files

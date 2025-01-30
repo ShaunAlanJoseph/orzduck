@@ -1,11 +1,16 @@
-from discord import File, Interaction
+from discord import File, Interaction, User as DiscUser
 from typing import Dict, Any, Optional, List, TYPE_CHECKING
 
 from database import user_queries
 from utils.context_manager import ctx_mgr
 from utils.discord import BaseModal, BaseEmbed, Messenger, BaseView
+from utils.discord.disc_utils import disc_utils
 from utils.general import get_time
-from codeforces.cf import get_handle_verification_problem, get_user_problem_status, Verdict
+from codeforces.cf import (
+    get_handle_verification_problem,
+    get_user_problem_status,
+    Verdict,
+)
 
 if TYPE_CHECKING:
     from codeforces.api import CFUser, CFProblem
@@ -22,6 +27,7 @@ class User:
 
     def __init__(self, user_data: Dict[str, Any]):
         self.user_id: int = user_data["user_id"]
+        self.disc_user: Optional["DiscUser"] = None
         self.fullname: str = user_data["fullname"]
         self.join_time: str = user_data["join_time"]
 
@@ -36,6 +42,9 @@ class User:
 
         assert self.cf_handle is not None
         self.cf_user = get_user_info(self.cf_handle)
+
+    async def load_disc_user(self):
+        self.disc_user = await disc_utils().fetch_user(self.user_id)
 
     async def save_user(self):
         await user_queries.save_user(self)
@@ -143,19 +152,23 @@ class UserVerificationView(BaseView):
         await interaction.response.defer()
 
         if custom_id == "done":
-            self.mode = "checking"            
+            self.mode = "checking"
             await self.check_done()
             return
 
         else:
             raise ValueError(f"Invalid custom_id: {custom_id}")
-        
+
         await self._send_view()
-    
+
     async def _get_embed(self):
-        embed = BaseEmbed(title="Handle Verification", description="Verifying your codeforces handle.")
+        embed = BaseEmbed(
+            title="Handle Verification", description="Verifying your codeforces handle."
+        )
         embed.add_field(name="CF Handle", value=self.cf_handle)
-        embed.add_field(name="Problem", value=f"[{self.problem.name}]({self.problem.link})")
+        embed.add_field(
+            name="Problem", value=f"[{self.problem.name}]({self.problem.link})"
+        )
 
         files: List[File] = []
         return embed, files
@@ -166,7 +179,9 @@ class UserVerificationView(BaseView):
             await self.stop_and_disable(custom_text="Verification Timed Out")
             return
 
-        submissions = get_user_problem_status(self.cf_handle, self.problem, self.start_time)
+        submissions = get_user_problem_status(
+            self.cf_handle, self.problem, self.start_time
+        )
         for submission in submissions:
             if submission[1] == Verdict.COMPILATION_ERROR.value:
                 self.stop()
@@ -174,7 +189,7 @@ class UserVerificationView(BaseView):
                 return
 
         self.mode = "default"
-        await self._send_view()        
+        await self._send_view()
 
 
 async def _orz_register_get_problem(user: User):

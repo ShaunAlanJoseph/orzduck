@@ -6,7 +6,7 @@ from logging import basicConfig, INFO, info
 from database.db import DB
 from orzduck_cog import OrzDuckCog
 from config import DISCORD_API_TOKEN, HQ_CHANNEL_ID
-from utils.discord.disc_utils import fetch_channel
+from utils.discord.disc_utils import DiscUtils, disc_utils
 from utils.context_manager import ContextManager
 
 
@@ -18,6 +18,7 @@ async def main():
     ContextManager.setup_context_manager()
 
     bot = commands.Bot(command_prefix="!", intents=Intents.all(), help_command=None)
+    DiscUtils.setup_disc_utils(bot)
 
     async def sync_tree():
         app_commands = await bot.tree.sync()
@@ -25,7 +26,7 @@ async def main():
 
     async def announce_online():
         assert bot.user is not None
-        HQ = await fetch_channel(bot, HQ_CHANNEL_ID)
+        HQ = await disc_utils().fetch_channel(HQ_CHANNEL_ID)
         await HQ.send(  # type: ignore
             f"Hi, I've logged in as **User:** `{bot.user.name}` (**ID:** `{bot.user.id}`)"
         )
