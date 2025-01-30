@@ -69,9 +69,11 @@ class TicTacDuel:
 
         self.status: str = duel_data["status"]
         self.winner: Optional[int] = duel_data.get("winner")
+        self.progress: List[str] = duel_data["progress"]
+
         self.first_solve: Optional[int] = None
         self.last_solved_coords: Optional[Tuple[int, int]] = None
-        self.progress: List[str] = duel_data["progress"]
+        self.winning_file_index: Optional[int] = None
 
         self.rating: int = duel_data["rating"]
         self.problems: List[str] = duel_data["problems"]
@@ -117,9 +119,6 @@ class TicTacDuel:
                     break
         timeline.sort(key=lambda x: x[0])
 
-        row = [0] * 3
-        col = [0] * 3
-        diag = [0] * 2
         self.first_solve = None
         self.last_solved_coords = None
         self.progress = ["~"] * len(self.problems_loaded)
@@ -131,21 +130,13 @@ class TicTacDuel:
                 break
             self.first_solve = self.first_solve or player
             self.progress[idx] = f"{player}~{time}"
-            x, y = divmod(idx, 3)
-            self.last_solved_coords = (x, y)
-            row[x] += 1
-            col[y] += 1
-            if x == y:
-                diag[0] += 1
-            if x + y == 2:
-                diag[1] += 1
-            if row[x] == 3 or col[y] == 3 or diag[0] == 3 or diag[1] == 3:
-                self.winner = player
-                self.status = DuelStatus.FINISHED.value
+            self.last_solved_coords = divmod(idx, 3)
+            self.update_board_status()
+            if self.status != DuelStatus.ONGOING.value:
                 self.end_time = time
                 break
 
-        if self.status != DuelStatus.FINISHED.value and get_time() > self.end_time:
+        if self.status == DuelStatus.ONGOING.value and get_time() > self.end_time:
             self.status = DuelStatus.TIMED_OUT.value
 
         await self.save_state()
@@ -159,7 +150,7 @@ class TicTacDuel:
                 board[x][y] = player  # type: ignore
         return board
 
-    def get_board_status(self) -> Tuple[str, int, int]:
+    def update_board_status(self):
         """
         Returns the current status of the board as FINISHED, ONGOING, or DRAW.
         
@@ -169,6 +160,8 @@ class TicTacDuel:
         """
         board = self.get_board()
         empty_cells: List[Tuple[int, int]] = []
+        self.winner = None
+        self.winning_file_index = None
         
         # Check for a win
         for i, file in enumerate(WINNING_FILES):
@@ -177,7 +170,10 @@ class TicTacDuel:
                 continue
 
             if all(board[x][y][0] == player for x, y in file):
-                return (DuelStatus.FINISHED.value, player, i)
+                self.status = DuelStatus.FINISHED.value
+                self.winner = player
+                self.winning_file_index = i
+                return
 
         for row in range(3):
             for col in range(3):
@@ -190,9 +186,9 @@ class TicTacDuel:
                 empty_in_file = sum(1 for x, y in file if board[x][y][0] == 0)
                 
                 if occupied_by_player + empty_in_file == 3:
-                    return (DuelStatus.ONGOING.value, -1, -1)
+                    self.status = DuelStatus.ONGOING.value
 
-        return (DuelStatus.DRAW.value, -1, -1)
+        self.status = DuelStatus.DRAW.value
 
     async def _get_player1_img(self) -> BytesIO:
         assert self.player1_loaded is not None
@@ -236,6 +232,31 @@ class TicTacDuel:
                 img = player1_img if board[i][j][0] == self.player1 else player2_img
                 layers.append(img)
                 layers_coords.append((x, y))
+        
+        if self.status == DuelStatus.FINISHED.value:
+            assert self.winning_file_index is not None
+            if self.winning_file_index < 3:
+                row = self.winning_file_index
+                across = imgh.load_image_from_path("bin/tictac_across.png")
+                across = imgh.extract_frames(across)
+                layers.append(across)
+                layers_coords.append((0, 300 * row))
+                
+            elif self.winning_file_index < 6: 
+                col = self.winning_file_index - 3
+                across = imgh.load_image_from_path("bin/tictac_across.png")
+                across = imgh.extract_frames(across)
+                across = [imgh.rotate_90_clockwise(img) for img in across]
+                layers.append(across)
+                layers_coords.append((300 * col, 0))
+            
+            else:
+                diag = imgh.load_image_from_path("bin/tictac_diag.png")
+                diag = imgh.extract_frames(diag)
+                if self.winning_file_index == 7:
+                    diag = [imgh.flip(img) for img in diag]
+                layers.append(diag)
+                layers_coords.append((0, 0))
 
         return imgh.stack_and_animate(layers, layers_coords=layers_coords)
 
@@ -278,7 +299,7 @@ class TickTacDuelView(BaseView):
         #                 row=i,
         #             )
 
-        if self.duel.status != DuelStatus.FINISHED.value:
+        if self.duel.status == DuelStatus.ONGOING.value:
             self._add_button(label="REFRESH", custom_id="refresh", row=3)
 
     async def _button_clicked(self, interaction: Interaction, custom_id: str) -> None:
@@ -299,12 +320,18 @@ class TickTacDuelView(BaseView):
         await self._send_view()
         if self.duel.status == DuelStatus.FINISHED.value:
             self.stop()
+        self._release_lock()
 
     async def _get_embed(self):
         embed = BaseEmbed(title="TicTac Duel")
-        if self.duel.status == DuelStatus.FINISHED.value:
+        if self.duel.status != DuelStatus.ONGOING.value:
             embed.add_field(name="")
-            embed.add_field(name="Winner 👑", value=f"<@{self.duel.winner}>")
+            if self.duel.status == DuelStatus.FINISHED.value:
+                embed.add_field(name="Winner 👑", value=f"<@{self.duel.winner}>")
+            elif self.duel.status == DuelStatus.DRAW.value:
+                embed.add_field(name="Draw 😕")
+            else:
+                raise ValueError(f"Invalid status: {self.duel.status}")
             embed.add_field(name="")
         from datetime import datetime
 

@@ -8,6 +8,7 @@ from utils.context_manager import ctx_mgr
 from utils.discord.messenger import Messenger
 from utils.discord.base_button import BaseButton, BaseURLButton
 from utils.discord.base_dropdown import BaseDropdown
+from utils.general import get_time
 
 
 class BaseView(View):
@@ -26,7 +27,7 @@ class BaseView(View):
         self._users = (users or []) + ([user] if user else [])
 
         # to lock interaction with the view
-        self._lock = False
+        self._lock: Optional[int] = None
 
         # context vars
         self._init_interaction = ctx_mgr().get_init_interaction()
@@ -88,13 +89,14 @@ class BaseView(View):
         self.stop()
 
     def _acquire_lock(self) -> bool:
-        if not self._lock:
-            self._lock = True
+        curr_time = get_time()
+        if self._lock is None or curr_time - self._lock >= 60:
+            self._lock = curr_time
             return True
         return False
 
     def _release_lock(self):
-        self._lock = False
+        self._lock = None
 
     def _add_button(
         self,
