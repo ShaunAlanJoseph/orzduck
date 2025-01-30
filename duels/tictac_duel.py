@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional, List, Tuple, TYPE_CHECKING
+from typing import Dict, Any, Optional, List, Tuple, TYPE_CHECKING, Union
 
 from discord import File, Interaction
 
@@ -11,6 +11,19 @@ if TYPE_CHECKING:
     from codeforces.models import CFProblem
     from orz_modules.user import User
 
+WINNING_FILES = [
+    # rows
+    [(0, 0), (0, 1), (0, 2)],
+    [(1, 0), (1, 1), (1, 2)],
+    [(2, 0), (2, 1), (2, 2)],
+    # columns
+    [(0, 0), (1, 0), (2, 0)],
+    [(0, 1), (1, 1), (2, 1)],
+    [(0, 2), (1, 2), (2, 2)],
+    # diagonals
+    [(0, 0), (1, 1), (2, 2)],
+    [(2, 0), (1, 1), (0, 2)]
+]
 
 class TicTacDuel:
     @classmethod
@@ -141,6 +154,41 @@ class TicTacDuel:
                 x, y = divmod(i, 3)
                 board[x][y] = player  # type: ignore
         return board
+
+    def get_board_status(self) -> Union[Tuple[str], Tuple[str, int, int]]:
+        """
+        Returns the current status of the board as FINISHED, ONGOING, or DRAW.
+        
+        If FINISHED, returns (FINISHED, winning_player, winning_file_index).
+        If DRAW, returns (DRAW,).
+        If ONGOING, returns (ONGOING,).
+        """
+        board = self.get_board()
+        empty_cells: List[Tuple[int, int]] = []
+        
+        # Check for a win
+        for i, file in enumerate(WINNING_FILES):
+            player = board[file[0][0]][file[0][1]][0]
+            if player == 0:
+                continue
+
+            if all(board[x][y][0] == player for x, y in file):
+                return (DuelStatus.FINISHED.value, player, i)
+
+        for row in range(3):
+            for col in range(3):
+                if board[row][col][0] == 0:
+                    empty_cells.append((row, col))
+
+        for player in [self.player1, self.player2]:
+            for i, file in enumerate(WINNING_FILES):
+                occupied_by_player = sum(1 for x, y in file if board[x][y][0] == player)
+                empty_in_file = sum(1 for x, y in file if board[x][y][0] == 0)
+                
+                if occupied_by_player + empty_in_file == 3:
+                    return (DuelStatus.ONGOING.value,)
+
+        return (DuelStatus.DRAW.value,)
     
     async def save_state(self):
         await duel_queries.save_tictac_duel(self)
