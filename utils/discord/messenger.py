@@ -29,19 +29,21 @@ class Messenger:
         for kwarg in ["content", "embed", "view", "files"]:
             if locals()[kwarg]:
                 kwargs[kwarg] = locals()[kwarg]
-        
-        # First response to the interaction
-        if message is None:
-            await interaction.response.send_message(
+
+        if message is not None:
+            message = await message.reply(**kwargs, allowed_mentions=allowed_mentions)
+
+        elif not interaction.response.is_done():
+            message = await interaction.response.send_message(
                 **kwargs, allowed_mentions=allowed_mentions
             )
             message = await interaction.original_response()
         
         else:
-            message = await message.reply(
-                **kwargs, allowed_mentions=allowed_mentions
+            message = await interaction.followup.send(
+                **kwargs, allowed_mentions=allowed_mentions, wait=True
             )
-
+        
         message = await message.channel.fetch_message(message.id)
 
         ctx_mgr().set_active_msg(message)

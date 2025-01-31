@@ -1,3 +1,4 @@
+from asyncio import sleep
 from typing import Dict, Any, Optional, List, Tuple, TYPE_CHECKING
 from discord import File, Interaction
 
@@ -176,7 +177,31 @@ class B3Duel:
         return BytesIO(player2_img)
     
     async def get_board_img(self) -> BytesIO:
-        raise NotImplementedError
+        move_locations = [(100, 100), (400, 100), (700, 100)]
+        move_size = (200, 200)
+
+        player1_img = imgh.load_image(await self._get_player1_img())
+        player1_img = imgh.extract_frames(player1_img)
+        player1_img = [imgh.resize(img, move_size) for img in player1_img]
+
+        player2_img = imgh.load_image(await self._get_player2_img())
+        player2_img = imgh.extract_frames(player2_img)
+        player2_img = [imgh.resize(img, move_size) for img in player2_img]
+
+        board_img = imgh.load_image_from_path("bin/b3_board.png")
+        board_img = imgh.extract_frames(board_img)
+        layers = [board_img]
+        layers_coords = [(0, 0)]
+        
+        board = self.get_board()
+        for i in range(3):
+            if board[i][0] == 0:
+                continue
+            player_img = player1_img if board[i][0] == self.player1 else player2_img
+            layers.append(player_img)
+            layers_coords.append(move_locations[i])
+        
+        return imgh.stack_and_animate(layers, layers_coords=layers_coords)
     
     async def save_state(self):
         await duel_queries.save_b3_duel(self)
@@ -219,6 +244,7 @@ class B3DuelView(BaseView):
         self._release_lock()
 
     async def refresh_duel(self) -> None:
+        await sleep(10)
         await self.duel.refresh_duel()
         if self.duel.status == DuelStatus.TIMED_OUT.value:
             await self.stop_and_disable(custom_text="Time's up!")
@@ -233,8 +259,6 @@ class B3DuelView(BaseView):
             embed.add_field(name="")
             if self.duel.status == DuelStatus.FINISHED.value:
                 embed.add_field(name="Winner 👑", value=f"<@{self.duel.winner}>")
-            elif self.duel.status == DuelStatus.DRAW.value:
-                embed.add_field(name="Draw 😕")
             else:
                 raise ValueError(f"Invalid status: {self.duel.status}")
             embed.add_field(name="")
@@ -259,8 +283,8 @@ class B3DuelView(BaseView):
             problem = self.duel.problems_loaded[i]
             value = f"**{i + 1}. [{problem.contestId}-{problem.index}]({problem.link})**"
             if board[i][0] != 0:
-                time_taken = (board[i][j][1] - self.duel.start_time) // 60
-                value += f"by <@{board[i][j][0]}> @ {time_taken} mins"
+                time_taken = (board[i][1] - self.duel.start_time) // 60
+                value += f"by <@{board[i][0]}> @ {time_taken} mins"
             else:
                 value += "by **~ ~ ~**"
             embed.add_field(name="", value=value)

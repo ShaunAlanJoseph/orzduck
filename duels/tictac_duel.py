@@ -1,3 +1,4 @@
+from asyncio import sleep
 from typing import Dict, Any, Optional, List, Tuple, TYPE_CHECKING
 from discord import File, Interaction
 from io import BytesIO
@@ -321,6 +322,7 @@ class TickTacDuelView(BaseView):
         self._release_lock()
 
     async def refresh_duel(self) -> None:
+        await sleep(10)
         await self.duel.refresh_duel()
         if self.duel.status == DuelStatus.TIMED_OUT.value:
             await self.stop_and_disable(custom_text="Time's up!")

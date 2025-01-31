@@ -138,7 +138,7 @@ class UserVerificationView(BaseView):
 
         self.mode = "default"
 
-        super().__init__(user=user.user_id)
+        super().__init__(user=user.user_id, timeout=360)
 
     def _add_items(self):
         self.clear_items()
@@ -175,7 +175,7 @@ class UserVerificationView(BaseView):
 
     async def check_done(self):
         curr_time = get_time()
-        if curr_time - self.start_time > 120:
+        if curr_time - self.start_time > 300:
             await self.stop_and_disable(custom_text="Verification Timed Out")
             return
 
