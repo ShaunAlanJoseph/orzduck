@@ -116,6 +116,12 @@ class DuelWaitingView(BaseView):
                 await _orz_duel_tictac(self.player1, self.player2, self.rating, self.time_limit)
                 return
             
+            if self.duel_mode == Duel.B3:
+                await self.stop_and_disable(custom_text="Starting . . .")
+                assert self.player2 is not None
+                await _orz_duel_b3(self.player1, self.player2, self.rating, self.time_limit)
+                return
+            
             else:
                 raise ValueError(f"Invalid duel_mode: {self.duel_mode}")
         
@@ -187,3 +193,39 @@ async def _orz_duel_tictac_select_problems(player1: User, player2: User, rating:
     
     duel = await TicTacDuel.create_duel(player1.user_id, player2.user_id, problems, rating, time_limit) 
     await TickTacDuelView.send_view(duel)
+
+
+async def orz_duel_b3(rating: int, time_limit: int):
+    player1 = ctx_mgr().get_user_id()
+    time_limit = min(time_limit, 300)
+    await DuelWaitingView.send_view(Duel.B3, player1, rating, time_limit)
+
+
+async def _orz_duel_b3(p1: int, p2: int, rating: int, time_limit: int):
+    player1 = await User.load_user(p1)
+    player2 = await User.load_user(p2)
+
+    await _orz_duel_b3_select_problems(player1, player2, rating, time_limit)
+
+
+async def _orz_duel_b3_select_problems(player1: User, player2: User, rating: int, time_limit: int):
+    from codeforces.cf import get_duel_problems
+    from duels.b3_duel import B3Duel, B3DuelView
+
+    try:
+        assert player1.cf_handle is not None
+        assert player2.cf_handle is not None
+        problems = await get_duel_problems(
+            player1.cf_handle, player2.cf_handle, rating - 100, rating + 100, 3
+        )
+    except ValueError:
+        embed = BaseEmbed(title="No Problems Found", description="No problems found for the given rating range.")
+        embed.add_field(name="Duel Mode", value=f"{Duel.B3}", inline=False)
+        embed.add_field(name="Player 1", value=f"<@{player1.user_id}>")
+        embed.add_field(name="Player 2", value=f"<@{player2.user_id}>")
+        embed.add_field(name="Rating", value=f"{rating}", inline=False)
+        await Messenger.send_message(embed=embed)
+        return
+    
+    duel = await B3Duel.create_duel(player1.user_id, player2.user_id, problems, rating, time_limit) 
+    await B3DuelView.send_view(duel)
